@@ -1,10 +1,9 @@
 use std::{error::Error, io::BufRead};
 
 use clap::{command, Command, arg};
+use ugit_rust::data;
 
-type MyResult<T> = Result<T, Box<dyn Error>>;
-
-fn parse_args() {
+fn parse_args() -> Result<(), std::io::Error> {
     // let matches = command!()
     let matches = Command::new("ugit")
         .subcommand_required(true)
@@ -16,14 +15,13 @@ fn parse_args() {
         .get_matches();
 
     match matches.subcommand() {
-        Some(("init", sub_matches)) => {
-            println!("Hello World");
+        Some(("init", _)) => {
+            data::init()
         },
         _ => unreachable!("No subcommand"), 
     }
 }
 
 fn main() {
-    // println!("Hello, world!");
-    parse_args();
+    parse_args().unwrap()
 }
