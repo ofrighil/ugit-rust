@@ -1,4 +1,4 @@
-use std::fs;
+use std::{fs, io::Write};
 
 use sha1::{Sha1, Digest};
 
@@ -10,7 +10,7 @@ pub fn init() -> std::io::Result<()> {
 
 pub fn hash_object(data: Vec<u8>) -> std::io::Result<String> {
     let mut hasher = Sha1::new();
-    hasher.update(data);
+    hasher.update(&data);
     let result = hasher.finalize();
 
     let string_representation = result
@@ -19,9 +19,14 @@ pub fn hash_object(data: Vec<u8>) -> std::io::Result<String> {
         .collect::<Vec<String>>()
         .join("");
     
-    fs::File::create(
+    let mut file = fs::File::create(
         format!("{}/objects/{}", GIT_DIR, string_representation)
     )?;
+    file.write_all(&data)?;
 
     Ok(format!("{:x?}", string_representation))
+}
+
+pub fn get_object(object: &str) -> Vec<u8> {
+    fs::read(format!("{}/objects/{}", GIT_DIR, object)).unwrap()
 }
