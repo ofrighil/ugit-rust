@@ -1,6 +1,4 @@
-use std::{error::Error, io::BufRead};
-
-use clap::{command, Command, arg};
+use clap::{Command, arg, Arg};
 use ugit_rust::data;
 
 fn parse_args() -> Result<(), std::io::Error> {
@@ -15,14 +13,19 @@ fn parse_args() -> Result<(), std::io::Error> {
         .subcommand(
             Command::new("hash-object")
                 .about("Get the hash of a file object") 
-                .arg(arg!([NAME]))
-                .arg(arg!([NAME]))
+                .arg(
+                    Arg::new("file")
+                        .help("Name of file")
+                        .required(true)
+                )
         )
         .get_matches();
 
     match matches.subcommand() {
         Some(("init", _)) => init(),
-        Some(("hash-object", sub_matches)) => hash_object(), 
+        Some(("hash-object", sub_matches)) => hash_object(
+            sub_matches.get_one::<String>("file").unwrap()
+        ), 
         _ => unreachable!("No subcommand"), 
     }
 }
@@ -37,8 +40,12 @@ fn init() -> Result<(), std::io::Error> {
     Ok(())
 }
 
-fn hash_object(file) {
-
+fn hash_object(file: &str) -> Result<(), std::io::Error> {
+    println!(
+        "{}",
+        data::hash_object(std::fs::read(file).unwrap()).unwrap()
+    );
+    Ok(())
 }
 
 fn main() {
