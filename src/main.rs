@@ -1,7 +1,7 @@
 use std::io::{self, Write};
 
 use clap::{Command, arg, Arg};
-use ugit_rust::data::{self, ObjectType};
+use ugit_rust::{data, base};
 
 fn parse_args() -> Result<(), std::io::Error> {
     // let matches = command!()
@@ -30,6 +30,15 @@ fn parse_args() -> Result<(), std::io::Error> {
                         .required(true)
                 )
         )
+        .subcommand(
+            Command::new("write-tree")
+                .about("Writes the tree to ugit")
+                .arg(
+                    Arg::new("directory")
+                        .help("Directory")
+                        .default_value(".")
+                )
+        )
         .get_matches();
 
     match matches.subcommand() {
@@ -39,6 +48,9 @@ fn parse_args() -> Result<(), std::io::Error> {
         ), 
         Some(("cat-file", sub_matches)) => cat_file(
             sub_matches.get_one::<String>("object").unwrap()
+        ),
+        Some(("write-tree", sub_matches)) => write_tree(
+            sub_matches.get_one::<String>("directory").unwrap()
         ),
         _ => unreachable!("No subcommand"), 
     }
@@ -58,7 +70,7 @@ fn hash_object(file: &str) -> Result<(), std::io::Error> {
     println!(
         "{}",
         data::hash_object(
-            std::fs::read(file).unwrap(), ObjectType::Blob
+            std::fs::read(file).unwrap(), data::ObjectType::Blob
         ).unwrap()
     );
     Ok(())
@@ -66,7 +78,12 @@ fn hash_object(file: &str) -> Result<(), std::io::Error> {
 
 fn cat_file(object: &str) -> Result<(), std::io::Error> {
     let mut stdout = io::stdout().lock();
-    stdout.write_all(&data::get_object(object, ObjectType::Blob))?;
+    stdout.write_all(&data::get_object(object, data::ObjectType::Blob))?;
+    Ok(())
+}
+
+fn write_tree(directory: &str) -> Result<(), std::io::Error> {
+    base::write_tree(directory);
     Ok(())
 }
 
