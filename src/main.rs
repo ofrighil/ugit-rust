@@ -1,7 +1,7 @@
 use std::io::{self, Write};
 
 use clap::{Command, arg, Arg};
-use ugit_rust::data;
+use ugit_rust::data::{self, ObjectType};
 
 fn parse_args() -> Result<(), std::io::Error> {
     // let matches = command!()
@@ -57,14 +57,16 @@ fn init() -> Result<(), std::io::Error> {
 fn hash_object(file: &str) -> Result<(), std::io::Error> {
     println!(
         "{}",
-        data::hash_object(std::fs::read(file).unwrap()).unwrap()
+        data::hash_object(
+            std::fs::read(file).unwrap(), ObjectType::Blob
+        ).unwrap()
     );
     Ok(())
 }
 
 fn cat_file(object: &str) -> Result<(), std::io::Error> {
     let mut stdout = io::stdout().lock();
-    stdout.write_all(&data::get_object(object))?;
+    stdout.write_all(&data::get_object(object, ObjectType::Blob))?;
     Ok(())
 }
 
