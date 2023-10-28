@@ -70,7 +70,7 @@ fn hash_object(file: &str) -> Result<(), std::io::Error> {
     println!(
         "{}",
         data::hash_object(
-            std::fs::read(file).unwrap(), data::ObjectType::Blob
+            &std::fs::read(file).unwrap(), data::ObjectType::Blob
         ).unwrap()
     );
     Ok(())
@@ -83,7 +83,7 @@ fn cat_file(object: &str) -> Result<(), std::io::Error> {
 }
 
 fn write_tree(directory: &str) -> Result<(), std::io::Error> {
-    base::write_tree(directory);
+    println!("{}", base::write_tree(directory));
     Ok(())
 }
 

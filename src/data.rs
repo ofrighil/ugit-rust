@@ -6,24 +6,27 @@ pub const GIT_DIR: &str = ".ugit";
 
 #[derive(PartialEq)]
 pub enum ObjectType {
-    Blob
+    Blob,
+    Tree
 }
 
 impl ObjectType {
-    fn as_string(self) -> &'static str {
+    pub fn as_string(&self) -> &'static str {
         match self {
-            ObjectType::Blob => "blob"
+            ObjectType::Blob => "blob",
+            ObjectType::Tree => "tree",
         }
     }
 
     fn from_string(s: &str) -> ObjectType {
         match s {
             "blob" => ObjectType::Blob,
+            "tree" => ObjectType::Tree,
             _ => panic!()
         }
     }
 
-    fn as_bytes(self) -> &'static [u8] {
+    fn as_bytes(&self) -> &'static [u8] {
         self.as_string().as_bytes()
     }
 }
@@ -33,11 +36,9 @@ pub fn init() -> std::io::Result<()> {
 }
 
 pub fn hash_object(
-    data: Vec<u8>, otype: ObjectType
+    data: &[u8], otype: ObjectType
 ) -> std::io::Result<String> {
-    let saved_data = [
-        &otype.as_bytes(), &[0u8].as_slice(), data.as_slice()
-    ].concat();
+    let saved_data = [&otype.as_bytes(), &[0u8].as_slice(), data].concat();
 
     let mut hasher = Sha1::new();
     hasher.update(&saved_data);
