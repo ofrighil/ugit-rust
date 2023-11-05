@@ -21,7 +21,7 @@ impl Entry {
     }
 }
 
-fn is_ignored(path: &PathBuf) -> bool {
+fn is_ignored(path: &Path) -> bool {
     path.to_str().unwrap().contains(".ugit")
 }
 
@@ -93,7 +93,22 @@ fn tree_entries(oid: &str) -> std::io::Result<Vec<Entry>> {
     Ok(all_entries)
 }
 
+fn empty_current_directory(directory: &Path) {
+    for path in fs::read_dir(directory).unwrap() {
+        let path = path.unwrap();
+        let ftype = path.file_type().unwrap();
+        if is_ignored(&path.path()) || ftype.is_symlink() {
+            continue;
+        } else if ftype.is_file() {
+            fs::remove_file(path.path()).unwrap();
+        } else if ftype.is_dir() {
+            fs::remove_dir_all(path.path()).unwrap();
+        }
+    }
+}
+
 pub fn read_tree(tree_oid: &str) -> std::io::Result<()> {
+    empty_current_directory(Path::new("."));
     for entry in tree_entries(tree_oid)? {
         if let Some(directory) = Path::new(&entry.file).parent() {
             fs::create_dir_all(&directory).unwrap();
