@@ -32,6 +32,14 @@ fn parse_args() -> Result<(), std::io::Error> {
                 .about("Reads the tree object")
                 .arg(Arg::new("tree").help("Tree Object").required(true)),
         )
+        .subcommand(
+            Command::new("commit").about("Commits the changes").arg(
+                Arg::new("message")
+                    .short('m')
+                    .help("Commit message")
+                    .required(true),
+            ),
+        )
         .get_matches();
 
     match matches.subcommand() {
@@ -48,6 +56,7 @@ fn parse_args() -> Result<(), std::io::Error> {
         Some(("read-tree", sub_matches)) => {
             read_tree(sub_matches.get_one::<String>("tree").unwrap())
         }
+        Some(("commit", sub_matches)) => commit(sub_matches.get_one::<String>("message").unwrap()),
         _ => unreachable!("No subcommand"),
     }
 }
@@ -83,6 +92,11 @@ fn write_tree(directory: &str) -> Result<(), std::io::Error> {
 
 fn read_tree(tree: &str) -> Result<(), std::io::Error> {
     base::read_tree(tree)?;
+    Ok(())
+}
+
+fn commit(message: &str) -> Result<(), std::io::Error> {
+    println!("{}", base::commit(message)?);
     Ok(())
 }
 

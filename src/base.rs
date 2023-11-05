@@ -21,6 +21,15 @@ impl Entry {
     }
 }
 
+pub fn commit(message: &str) -> std::io::Result<String> {
+    data::hash_object(
+        [&format!("tree {}", write_tree(Path::new("."))), "", message]
+            .join("\n")
+            .as_bytes(),
+        data::ObjectType::Hash,
+    )
+}
+
 fn is_ignored(path: &Path) -> bool {
     path.to_str().unwrap().contains(".ugit")
 }
@@ -86,6 +95,7 @@ fn tree_entries(oid: &str) -> std::io::Result<Vec<Entry>> {
     for entry in entries {
         match entry.otype {
             data::ObjectType::Blob => all_entries.push(entry),
+            data::ObjectType::Hash => continue,
             data::ObjectType::Tree => all_entries.extend(tree_entries(&entry.oid)?),
         }
     }

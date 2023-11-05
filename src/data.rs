@@ -7,6 +7,7 @@ pub const GIT_DIR: &str = ".ugit";
 #[derive(Debug, PartialEq)]
 pub enum ObjectType {
     Blob,
+    Hash,
     Tree,
 }
 
@@ -14,6 +15,7 @@ impl ObjectType {
     pub fn as_string(&self) -> &'static str {
         match self {
             ObjectType::Blob => "blob",
+            ObjectType::Hash => "hash",
             ObjectType::Tree => "tree",
         }
     }
@@ -21,6 +23,7 @@ impl ObjectType {
     pub fn from_string(s: &str) -> ObjectType {
         match s {
             "blob" => ObjectType::Blob,
+            "hash" => ObjectType::Hash,
             "tree" => ObjectType::Tree,
             _ => panic!(),
         }
