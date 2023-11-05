@@ -38,6 +38,13 @@ pub fn init() -> std::io::Result<()> {
     fs::create_dir_all(format!("{}/objects", GIT_DIR))
 }
 
+#[allow(non_snake_case)]
+pub fn set_HEAD(oid: &str) -> std::io::Result<()> {
+    let mut file = fs::File::create(format!("{}/HEAD", GIT_DIR))?;
+    file.write_all(oid.as_bytes())?;
+    Ok(())
+}
+
 pub fn hash_object(data: &[u8], otype: ObjectType) -> std::io::Result<String> {
     let saved_data = [&otype.as_bytes(), &[0u8].as_slice(), data].concat();
 

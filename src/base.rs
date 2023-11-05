@@ -22,12 +22,16 @@ impl Entry {
 }
 
 pub fn commit(message: &str) -> std::io::Result<String> {
-    data::hash_object(
+    let oid = data::hash_object(
         [&format!("tree {}", write_tree(Path::new("."))), "", message]
             .join("\n")
             .as_bytes(),
         data::ObjectType::Hash,
-    )
+    )?;
+
+    data::set_HEAD(&oid)?;
+
+    Ok(oid)
 }
 
 fn is_ignored(path: &Path) -> bool {
