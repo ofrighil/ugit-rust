@@ -1,13 +1,13 @@
 use std::{fs, io::Write};
 
-use sha1::{Sha1, Digest};
+use sha1::{Digest, Sha1};
 
 pub const GIT_DIR: &str = ".ugit";
 
-#[derive(PartialEq)]
+#[derive(Debug, PartialEq)]
 pub enum ObjectType {
     Blob,
-    Tree
+    Tree,
 }
 
 impl ObjectType {
@@ -18,11 +18,11 @@ impl ObjectType {
         }
     }
 
-    fn from_string(s: &str) -> ObjectType {
+    pub fn from_string(s: &str) -> ObjectType {
         match s {
             "blob" => ObjectType::Blob,
             "tree" => ObjectType::Tree,
-            _ => panic!()
+            _ => panic!(),
         }
     }
 
@@ -35,9 +35,7 @@ pub fn init() -> std::io::Result<()> {
     fs::create_dir_all(format!("{}/objects", GIT_DIR))
 }
 
-pub fn hash_object(
-    data: &[u8], otype: ObjectType
-) -> std::io::Result<String> {
+pub fn hash_object(data: &[u8], otype: ObjectType) -> std::io::Result<String> {
     let saved_data = [&otype.as_bytes(), &[0u8].as_slice(), data].concat();
 
     let mut hasher = Sha1::new();
@@ -49,22 +47,17 @@ pub fn hash_object(
         .map(|h| format!("{:x?}", h))
         .collect::<Vec<String>>()
         .join("");
-    
-    let mut file = fs::File::create(
-        format!("{}/objects/{}", GIT_DIR, string_representation)
-    )?;
+
+    let mut file = fs::File::create(format!("{}/objects/{}", GIT_DIR, string_representation))?;
     file.write_all(&saved_data)?;
 
     Ok(format!("{:x?}", string_representation))
 }
 
 pub fn get_object(object: &str, expected: ObjectType) -> Vec<u8> {
-    let content = fs::read(format!("{}/objects/{}", GIT_DIR, object))
-        .unwrap();
+    let content = fs::read(format!("{}/objects/{}", GIT_DIR, object)).unwrap();
 
-    let saved_data = content
-        .split(|&b| b == 0u8)
-        .collect::<Vec<_>>();
+    let saved_data = content.split(|&b| b == 0u8).collect::<Vec<_>>();
 
     let actual = std::str::from_utf8(saved_data[0]);
     if let Ok(res) = actual {

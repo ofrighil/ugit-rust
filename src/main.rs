@@ -1,7 +1,7 @@
 use std::io::{self, Write};
 
-use clap::{Command, arg, Arg};
-use ugit_rust::{data, base};
+use clap::{arg, Arg, Command};
+use ugit_rust::{base, data};
 
 fn parse_args() -> Result<(), std::io::Error> {
     // let matches = command!()
@@ -10,49 +10,45 @@ fn parse_args() -> Result<(), std::io::Error> {
         .subcommand(
             Command::new("init")
                 .about("Initialize new git repository")
-                .arg(arg!([NAME]))
+                .arg(arg!([NAME])),
         )
         .subcommand(
             Command::new("hash-object")
-                .about("Get the hash of a file object") 
-                .arg(
-                    Arg::new("file")
-                        .help("Name of file")
-                        .required(true)
-                )
+                .about("Get the hash of a file object")
+                .arg(Arg::new("file").help("Name of file").required(true)),
         )
         .subcommand(
             Command::new("cat-file")
                 .about("Prints the file by object")
-                .arg(
-                    Arg::new("object")
-                        .help("Object")
-                        .required(true)
-                )
+                .arg(Arg::new("object").help("Object").required(true)),
         )
         .subcommand(
             Command::new("write-tree")
                 .about("Writes the tree to ugit")
-                .arg(
-                    Arg::new("directory")
-                        .help("Directory")
-                        .default_value(".")
-                )
+                .arg(Arg::new("directory").help("Directory").default_value(".")),
+        )
+        .subcommand(
+            Command::new("read-tree")
+                .about("Reads the tree object")
+                .arg(Arg::new("tree").help("Tree Object").required(true)),
         )
         .get_matches();
 
     match matches.subcommand() {
         Some(("init", _)) => init(),
-        Some(("hash-object", sub_matches)) => hash_object(
-            sub_matches.get_one::<String>("file").unwrap()
-        ), 
-        Some(("cat-file", sub_matches)) => cat_file(
-            sub_matches.get_one::<String>("object").unwrap()
-        ),
-        Some(("write-tree", sub_matches)) => write_tree(
-            sub_matches.get_one::<String>("directory").unwrap()
-        ),
-        _ => unreachable!("No subcommand"), 
+        Some(("hash-object", sub_matches)) => {
+            hash_object(sub_matches.get_one::<String>("file").unwrap())
+        }
+        Some(("cat-file", sub_matches)) => {
+            cat_file(sub_matches.get_one::<String>("object").unwrap())
+        }
+        Some(("write-tree", sub_matches)) => {
+            write_tree(sub_matches.get_one::<String>("directory").unwrap())
+        }
+        Some(("read-tree", sub_matches)) => {
+            read_tree(sub_matches.get_one::<String>("tree").unwrap())
+        }
+        _ => unreachable!("No subcommand"),
     }
 }
 
@@ -69,9 +65,7 @@ fn init() -> Result<(), std::io::Error> {
 fn hash_object(file: &str) -> Result<(), std::io::Error> {
     println!(
         "{}",
-        data::hash_object(
-            &std::fs::read(file).unwrap(), data::ObjectType::Blob
-        ).unwrap()
+        data::hash_object(&std::fs::read(file).unwrap(), data::ObjectType::Blob).unwrap()
     );
     Ok(())
 }
@@ -83,7 +77,12 @@ fn cat_file(object: &str) -> Result<(), std::io::Error> {
 }
 
 fn write_tree(directory: &str) -> Result<(), std::io::Error> {
-    println!("{}", base::write_tree(directory));
+    println!("{}", base::write_tree(std::path::Path::new(directory)));
+    Ok(())
+}
+
+fn read_tree(tree: &str) -> Result<(), std::io::Error> {
+    base::read_tree(tree)?;
     Ok(())
 }
 
