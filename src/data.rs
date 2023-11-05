@@ -1,4 +1,8 @@
-use std::{fs, io::Write};
+use std::{
+    fs,
+    io::{self, BufRead, Write},
+    path,
+};
 
 use sha1::{Digest, Sha1};
 
@@ -43,6 +47,21 @@ pub fn set_HEAD(oid: &str) -> std::io::Result<()> {
     let mut file = fs::File::create(format!("{}/HEAD", GIT_DIR))?;
     file.write_all(oid.as_bytes())?;
     Ok(())
+}
+
+#[allow(non_snake_case)]
+pub fn get_HEAD() -> Option<String> {
+    let HEAD = format!("{}/HEAD", GIT_DIR);
+    if path::Path::new(&HEAD).try_exists().is_ok() {
+        io::BufReader::new(fs::File::open(&HEAD).unwrap())
+            .lines()
+            .take(1)
+            .next()
+            .unwrap()
+            .ok()
+    } else {
+        None
+    }
 }
 
 pub fn hash_object(data: &[u8], otype: ObjectType) -> std::io::Result<String> {
