@@ -1,17 +1,13 @@
 use std::io::{self, Write};
 
-use clap::{arg, Arg, Command};
+use clap::{Arg, Command};
 use ugit_rust::{base, data};
 
 fn parse_args() -> Result<(), std::io::Error> {
     // let matches = command!()
     let matches = Command::new("ugit")
         .subcommand_required(true)
-        .subcommand(
-            Command::new("init")
-                .about("Initialize new git repository")
-                .arg(arg!([NAME])),
-        )
+        .subcommand(Command::new("init").about("Initialize new git repository"))
         .subcommand(
             Command::new("hash-object")
                 .about("Get the hash of a file object")
@@ -40,6 +36,7 @@ fn parse_args() -> Result<(), std::io::Error> {
                     .required(true),
             ),
         )
+        .subcommand(Command::new("log").about("Print commit information"))
         .get_matches();
 
     match matches.subcommand() {
@@ -57,6 +54,7 @@ fn parse_args() -> Result<(), std::io::Error> {
             read_tree(sub_matches.get_one::<String>("tree").unwrap())
         }
         Some(("commit", sub_matches)) => commit(sub_matches.get_one::<String>("message").unwrap()),
+        Some(("log", _)) => log(),
         _ => unreachable!("No subcommand"),
     }
 }
@@ -97,6 +95,26 @@ fn read_tree(tree: &str) -> Result<(), std::io::Error> {
 
 fn commit(message: &str) -> Result<(), std::io::Error> {
     println!("{}", base::commit(message)?);
+    Ok(())
+}
+
+fn log() -> Result<(), std::io::Error> {
+    let mut oid = data::get_HEAD();
+
+    while let Some(o) = oid {
+        let commit: base::Commit = base::get_commit(&o.replace("\"", ""));
+
+        println!("commit {}", o);
+        println!("{}", commit.message);
+        println!();
+
+        if let Some(p) = commit.parent {
+            oid = Some(p.replace("parent ", ""));
+        } else {
+            oid = None
+        }
+    }
+
     Ok(())
 }
 

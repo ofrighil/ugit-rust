@@ -11,23 +11,23 @@ pub const GIT_DIR: &str = ".ugit";
 #[derive(Debug, PartialEq)]
 pub enum ObjectType {
     Blob,
-    Hash,
+    Commit,
     Tree,
 }
 
 impl ObjectType {
     pub fn as_string(&self) -> &'static str {
         match self {
+            ObjectType::Commit => "commit",
             ObjectType::Blob => "blob",
-            ObjectType::Hash => "hash",
             ObjectType::Tree => "tree",
         }
     }
 
     pub fn from_string(s: &str) -> ObjectType {
         match s {
+            "commit" => ObjectType::Commit,
             "blob" => ObjectType::Blob,
-            "hash" => ObjectType::Hash,
             "tree" => ObjectType::Tree,
             _ => panic!(),
         }
@@ -52,7 +52,7 @@ pub fn set_HEAD(oid: &str) -> std::io::Result<()> {
 #[allow(non_snake_case)]
 pub fn get_HEAD() -> Option<String> {
     let HEAD = format!("{}/HEAD", GIT_DIR);
-    if path::Path::new(&HEAD).try_exists().is_ok() {
+    if path::Path::new(&HEAD).try_exists().unwrap() {
         io::BufReader::new(fs::File::open(&HEAD).unwrap())
             .lines()
             .take(1)

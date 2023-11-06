@@ -21,6 +21,13 @@ impl Entry {
     }
 }
 
+#[derive(Debug)]
+pub struct Commit {
+    pub tree: String,
+    pub parent: Option<String>,
+    pub message: String,
+}
+
 pub fn commit(message: &str) -> std::io::Result<String> {
     let mut commit_message = Vec::new();
     commit_message.push(format!("tree {}", write_tree(Path::new("."))));
@@ -30,11 +37,33 @@ pub fn commit(message: &str) -> std::io::Result<String> {
     commit_message.push("".to_string());
     commit_message.push(message.to_string());
 
-    let oid = data::hash_object(commit_message.join("\n").as_bytes(), data::ObjectType::Hash)?;
+    let oid = data::hash_object(
+        commit_message.join("\n").as_bytes(),
+        data::ObjectType::Commit,
+    )?;
 
     data::set_HEAD(&oid)?;
 
     Ok(oid)
+}
+
+pub fn get_commit(oid: &str) -> Commit {
+    let commit = data::get_object(oid, data::ObjectType::Commit);
+    let message = std::str::from_utf8(&commit).unwrap().to_string();
+
+    let mut history = message.split("\n");
+
+    let tree = history.next().unwrap().to_string();
+    let parent = match history.next().unwrap() {
+        "" => None,
+        p => Some(p.to_string()),
+    };
+
+    Commit {
+        tree,
+        parent,
+        message,
+    }
 }
 
 fn is_ignored(path: &Path) -> bool {
@@ -102,7 +131,7 @@ fn tree_entries(oid: &str) -> std::io::Result<Vec<Entry>> {
     for entry in entries {
         match entry.otype {
             data::ObjectType::Blob => all_entries.push(entry),
-            data::ObjectType::Hash => continue,
+            data::ObjectType::Commit => continue,
             data::ObjectType::Tree => all_entries.extend(tree_entries(&entry.oid)?),
         }
     }
