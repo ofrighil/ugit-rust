@@ -36,7 +36,11 @@ fn parse_args() -> Result<(), std::io::Error> {
                     .required(true),
             ),
         )
-        .subcommand(Command::new("log").about("Print commit information"))
+        .subcommand(
+            Command::new("log")
+                .about("Print commit information")
+                .arg(Arg::new("oid").help("The object ID")),
+        )
         .get_matches();
 
     match matches.subcommand() {
@@ -54,7 +58,7 @@ fn parse_args() -> Result<(), std::io::Error> {
             read_tree(sub_matches.get_one::<String>("tree").unwrap())
         }
         Some(("commit", sub_matches)) => commit(sub_matches.get_one::<String>("message").unwrap()),
-        Some(("log", _)) => log(),
+        Some(("log", sub_matches)) => log(sub_matches.get_one::<String>("oid").cloned()),
         _ => unreachable!("No subcommand"),
     }
 }
@@ -98,8 +102,8 @@ fn commit(message: &str) -> Result<(), std::io::Error> {
     Ok(())
 }
 
-fn log() -> Result<(), std::io::Error> {
-    let mut oid = data::get_HEAD();
+fn log(input_oid: Option<String>) -> Result<(), std::io::Error> {
+    let mut oid = input_oid.map_or(data::get_HEAD(), |ioid| Some(ioid));
 
     while let Some(o) = oid {
         let commit: base::Commit = base::get_commit(&o.replace("\"", ""));
