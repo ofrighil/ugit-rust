@@ -38,7 +38,7 @@ pub fn commit(message: &str) -> std::io::Result<String> {
     commit_message.push(message.to_string());
 
     let oid = data::hash_object(
-        commit_message.join("\n").as_bytes(),
+        commit_message.join("\n").replace("\"", "").as_bytes(),
         data::ObjectType::Commit,
     )?;
 
@@ -53,7 +53,14 @@ pub fn get_commit(oid: &str) -> Commit {
 
     let mut history = message.split("\n");
 
-    let tree = history.next().unwrap().to_string();
+    let tree = history
+        .next()
+        .unwrap()
+        .to_string()
+        .split(" ")
+        .last()
+        .unwrap()
+        .to_string();
     let parent = match history.next().unwrap() {
         "" => None,
         p => Some(p.to_string()),
@@ -162,5 +169,13 @@ pub fn read_tree(tree_oid: &str) -> std::io::Result<()> {
         let mut file = fs::File::create(&entry.file)?;
         file.write_all(&data::get_object(&entry.oid, entry.otype))?;
     }
+    Ok(())
+}
+
+pub fn checkout(oid: &str) -> std::io::Result<()> {
+    let commit = get_commit(oid);
+    read_tree(&commit.tree)?;
+    data::set_HEAD(oid)?;
+
     Ok(())
 }
