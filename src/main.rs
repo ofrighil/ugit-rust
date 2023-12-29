@@ -4,7 +4,6 @@ use clap::{Arg, Command};
 use ugit_rust::{base, data};
 
 fn parse_args() -> Result<(), std::io::Error> {
-    // let matches = command!()
     let matches = Command::new("ugit")
         .subcommand_required(true)
         .subcommand(Command::new("init").about("Initialize new git repository"))
@@ -46,6 +45,12 @@ fn parse_args() -> Result<(), std::io::Error> {
                 .about("Checkout by an object ID")
                 .arg(Arg::new("oid").help("The object ID")),
         )
+        .subcommand(
+            Command::new("tag")
+                .about("Checkout by an object ID")
+                .arg(Arg::new("name").help("The tag name").required(true))
+                .arg(Arg::new("oid").help("The object ID")),
+        )
         .get_matches();
 
     match matches.subcommand() {
@@ -65,6 +70,10 @@ fn parse_args() -> Result<(), std::io::Error> {
         Some(("commit", sub_matches)) => commit(sub_matches.get_one::<String>("message").unwrap()),
         Some(("log", sub_matches)) => log(sub_matches.get_one::<String>("oid").cloned()),
         Some(("checkout", sub_matches)) => checkout(sub_matches.get_one::<String>("oid").unwrap()),
+        Some(("tag", sub_matches)) => tag(
+            sub_matches.get_one::<String>("name").unwrap(),
+            sub_matches.get_one::<String>("oid").map(|s| s.as_str()),
+        ),
         _ => unreachable!("No subcommand"),
     }
 }
@@ -131,6 +140,11 @@ fn log(input_oid: Option<String>) -> Result<(), std::io::Error> {
 
 fn checkout(oid: &str) -> Result<(), std::io::Error> {
     base::checkout(oid)?;
+    Ok(())
+}
+
+fn tag(name: &str, tag: Option<&str>) -> Result<(), std::io::Error> {
+    base::create_tag(name, tag)?;
     Ok(())
 }
 

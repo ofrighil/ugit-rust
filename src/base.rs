@@ -179,3 +179,7 @@ pub fn checkout(oid: &str) -> std::io::Result<()> {
 
     Ok(())
 }
+
+pub fn create_tag(_name: &str, _oid: Option<&str>) -> std::io::Result<()> {
+    Ok(())
+}
