@@ -143,8 +143,11 @@ fn checkout(oid: &str) -> Result<(), std::io::Error> {
     Ok(())
 }
 
-fn tag(name: &str, tag: Option<&str>) -> Result<(), std::io::Error> {
-    base::create_tag(name, tag)?;
+fn tag(name: &str, oid: Option<&str>) -> Result<(), std::io::Error> {
+    base::create_tag(
+        name,
+        oid.or(data::get_ref("HEAD").as_deref()).unwrap()
+    )?;
     Ok(())
 }
 

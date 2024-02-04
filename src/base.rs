@@ -180,6 +180,8 @@ pub fn checkout(oid: &str) -> std::io::Result<()> {
     Ok(())
 }
 
-pub fn create_tag(_name: &str, _oid: Option<&str>) -> std::io::Result<()> {
+pub fn create_tag(name: &str, oid: &str) -> std::io::Result<()> {
+    let ref_name = &format!("refs/tags/{}", name);
+    data::update_ref(ref_name, oid)?;
     Ok(())
 }

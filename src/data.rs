@@ -43,7 +43,9 @@ pub fn init() -> std::io::Result<()> {
 }
 
 pub fn update_ref(ref_name: &str, oid: &str) -> std::io::Result<()> {
-    let mut file = fs::File::create(format!("{}/{}", GIT_DIR, ref_name))?;
+    let ref_path = format!("{}/{}", GIT_DIR, ref_name);
+    fs::create_dir_all(path::Path::new(&ref_path).parent().unwrap())?;
+    let mut file = fs::File::create(ref_path)?;
     file.write_all(oid.as_bytes())?;
     Ok(())
 }
