@@ -42,18 +42,16 @@ pub fn init() -> std::io::Result<()> {
     fs::create_dir_all(format!("{}/objects", GIT_DIR))
 }
 
-#[allow(non_snake_case)]
-pub fn set_HEAD(oid: &str) -> std::io::Result<()> {
-    let mut file = fs::File::create(format!("{}/HEAD", GIT_DIR))?;
+pub fn update_ref(ref_name: &str, oid: &str) -> std::io::Result<()> {
+    let mut file = fs::File::create(format!("{}/{}", GIT_DIR, ref_name))?;
     file.write_all(oid.as_bytes())?;
     Ok(())
 }
 
-#[allow(non_snake_case)]
-pub fn get_HEAD() -> Option<String> {
-    let HEAD = format!("{}/HEAD", GIT_DIR);
-    if path::Path::new(&HEAD).try_exists().unwrap() {
-        io::BufReader::new(fs::File::open(&HEAD).unwrap())
+pub fn get_ref(ref_name: &str) -> Option<String> {
+    let ref_path = format!("{}/{}", GIT_DIR, ref_name);
+    if path::Path::new(&ref_path).try_exists().unwrap() {
+        io::BufReader::new(fs::File::open(&ref_path).unwrap())
             .lines()
             .take(1)
             .next()

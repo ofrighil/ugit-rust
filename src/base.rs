@@ -31,7 +31,7 @@ pub struct Commit {
 pub fn commit(message: &str) -> std::io::Result<String> {
     let mut commit_message = Vec::new();
     commit_message.push(format!("tree {}", write_tree(Path::new("."))));
-    if let Some(parent) = data::get_HEAD() {
+    if let Some(parent) = data::get_ref("HEAD") {
         commit_message.push(format!("parent {}", parent));
     }
     commit_message.push("".to_string());
@@ -42,7 +42,7 @@ pub fn commit(message: &str) -> std::io::Result<String> {
         data::ObjectType::Commit,
     )?;
 
-    data::set_HEAD(&oid)?;
+    data::update_ref("HEAD", &oid)?;
 
     Ok(oid)
 }
@@ -175,7 +175,7 @@ pub fn read_tree(tree_oid: &str) -> std::io::Result<()> {
 pub fn checkout(oid: &str) -> std::io::Result<()> {
     let commit = get_commit(oid);
     read_tree(&commit.tree)?;
-    data::set_HEAD(oid)?;
+    data::update_ref("HEAD", oid)?;
 
     Ok(())
 }

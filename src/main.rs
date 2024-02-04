@@ -118,7 +118,7 @@ fn commit(message: &str) -> Result<(), std::io::Error> {
 }
 
 fn log(input_oid: Option<String>) -> Result<(), std::io::Error> {
-    let mut oid = input_oid.map_or(data::get_HEAD(), |ioid| Some(ioid));
+    let mut oid = input_oid.map_or(data::get_ref("HEAD"), |ioid| Some(ioid));
 
     while let Some(o) = oid {
         let actual_oid = &o.replace("\"", "");
