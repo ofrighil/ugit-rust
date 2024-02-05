@@ -98,7 +98,10 @@ fn hash_object(file: &str) -> Result<(), std::io::Error> {
 
 fn cat_file(object: &str) -> Result<(), std::io::Error> {
     let mut stdout = io::stdout().lock();
-    stdout.write_all(&data::get_object(object, data::ObjectType::Blob))?;
+    stdout.write_all(&data::get_object(
+        &base::get_oid(object),
+        data::ObjectType::Blob,
+    ))?;
     Ok(())
 }
 
@@ -108,7 +111,7 @@ fn write_tree(directory: &str) -> Result<(), std::io::Error> {
 }
 
 fn read_tree(tree: &str) -> Result<(), std::io::Error> {
-    base::read_tree(tree)?;
+    base::read_tree(&base::get_oid(tree))?;
     Ok(())
 }
 
@@ -118,7 +121,7 @@ fn commit(message: &str) -> Result<(), std::io::Error> {
 }
 
 fn log(input_oid: Option<String>) -> Result<(), std::io::Error> {
-    let mut oid = input_oid.map_or(data::get_ref("HEAD"), |ioid| Some(ioid));
+    let mut oid = input_oid.map_or(data::get_ref("HEAD"), |ioid| Some(base::get_oid(&ioid)));
 
     while let Some(o) = oid {
         let actual_oid = &o.replace("\"", "");
@@ -139,14 +142,14 @@ fn log(input_oid: Option<String>) -> Result<(), std::io::Error> {
 }
 
 fn checkout(oid: &str) -> Result<(), std::io::Error> {
-    base::checkout(oid)?;
+    base::checkout(&base::get_oid(oid))?;
     Ok(())
 }
 
 fn tag(name: &str, oid: Option<&str>) -> Result<(), std::io::Error> {
     base::create_tag(
         name,
-        oid.or(data::get_ref("HEAD").as_deref()).unwrap()
+        &oid.map_or(data::get_ref("HEAD").unwrap(), |ioid| base::get_oid(ioid)),
     )?;
     Ok(())
 }

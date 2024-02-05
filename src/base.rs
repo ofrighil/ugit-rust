@@ -73,6 +73,10 @@ pub fn get_commit(oid: &str) -> Commit {
     }
 }
 
+pub fn get_oid(name: &str) -> String {
+    data::get_ref(name).or(Some(name.to_string())).unwrap()
+}
+
 fn is_ignored(path: &Path) -> bool {
     path.to_str().unwrap().contains(".ugit")
 }
