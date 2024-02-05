@@ -74,7 +74,29 @@ pub fn get_commit(oid: &str) -> Commit {
 }
 
 pub fn get_oid(name: &str) -> String {
-    data::get_ref(name).or(Some(name.to_string())).unwrap()
+    // Name is a ref
+    let ref_names = [
+        format!("{}", name),
+        format!("refs/{}", name),
+        format!("refs/tags/{}", name),
+        format!("refs/heads/{}", name),
+    ];
+    for ref_name in ref_names {
+        if let Some(oid) = data::get_ref(&ref_name) {
+            return oid;
+        }
+    }
+
+    // Name is an OID
+    for character in name.chars() {
+        if !character.is_ascii_hexdigit() {
+            panic!("Unknown name {}", name)
+        }
+    }
+    if name.len() != 40 {
+        panic!("Unknown name {}", name);
+    }
+    name.to_string()
 }
 
 fn is_ignored(path: &Path) -> bool {
