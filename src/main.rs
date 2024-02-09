@@ -51,6 +51,7 @@ fn parse_args() -> Result<(), std::io::Error> {
                 .arg(Arg::new("name").help("The tag name").required(true))
                 .arg(Arg::new("oid").default_value("@").help("The object ID")),
         )
+        .subcommand(Command::new("k").about("Visualizer tool to draw all refs and commits"))
         .get_matches();
 
     match matches.subcommand() {
@@ -74,6 +75,7 @@ fn parse_args() -> Result<(), std::io::Error> {
             sub_matches.get_one::<String>("name").unwrap(),
             sub_matches.get_one::<String>("oid").unwrap(),
         ),
+        Some(("k", _)) => k(),
         _ => unreachable!("No subcommand"),
     }
 }
@@ -148,6 +150,14 @@ fn checkout(oid: &str) -> Result<(), std::io::Error> {
 
 fn tag(name: &str, oid: &str) -> Result<(), std::io::Error> {
     base::create_tag(name, &base::get_oid(&oid))?;
+    Ok(())
+}
+
+fn k() -> Result<(), std::io::Error> {
+    for r in data::refs().iter() {
+        println!("{}", r);
+    }
+
     Ok(())
 }
 

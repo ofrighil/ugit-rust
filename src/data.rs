@@ -1,7 +1,7 @@
 use std::{
     fs,
     io::{self, BufRead, Write},
-    path,
+    path::Path,
 };
 
 use sha1::{Digest, Sha1};
@@ -44,7 +44,7 @@ pub fn init() -> std::io::Result<()> {
 
 pub fn update_ref(ref_name: &str, oid: &str) -> std::io::Result<()> {
     let ref_path = format!("{}/{}", GIT_DIR, ref_name);
-    fs::create_dir_all(path::Path::new(&ref_path).parent().unwrap())?;
+    fs::create_dir_all(Path::new(&ref_path).parent().unwrap())?;
     let mut file = fs::File::create(ref_path)?;
     file.write_all(oid.as_bytes())?;
     Ok(())
@@ -52,7 +52,7 @@ pub fn update_ref(ref_name: &str, oid: &str) -> std::io::Result<()> {
 
 pub fn get_ref(ref_name: &str) -> Option<String> {
     let ref_path = format!("{}/{}", GIT_DIR, ref_name);
-    if path::Path::new(&ref_path).try_exists().unwrap() {
+    if Path::new(&ref_path).try_exists().unwrap() {
         io::BufReader::new(fs::File::open(&ref_path).unwrap())
             .lines()
             .take(1)
@@ -99,4 +99,28 @@ pub fn get_object(object: &str, expected: ObjectType) -> Vec<u8> {
     }
 
     saved_data[1].to_vec()
+}
+
+fn get_refs(directory: &Path) -> Vec<String> {
+    let dir = fs::read_dir(directory).unwrap();
+
+    let mut entries: Vec<String> = vec![];
+
+    for entry in dir {
+        let path = entry.unwrap().path().to_owned();
+        if path.is_file() {
+            entries.push(path.file_stem().unwrap().to_str().unwrap().to_string());
+        } else {
+            entries.extend(get_refs(&path));
+        }
+    }
+
+    entries
+}
+
+pub fn refs() -> Vec<String> {
+    let mut ref_list = vec!["HEAD".to_string()];
+    ref_list.extend(get_refs(&Path::new(&format!("{}/refs", GIT_DIR))));
+
+    ref_list
 }
