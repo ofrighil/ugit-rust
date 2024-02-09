@@ -38,7 +38,7 @@ fn parse_args() -> Result<(), std::io::Error> {
         .subcommand(
             Command::new("log")
                 .about("Print commit information")
-                .arg(Arg::new("oid").help("The object ID")),
+                .arg(Arg::new("oid").default_value("@").help("The object ID")),
         )
         .subcommand(
             Command::new("checkout")
@@ -49,7 +49,7 @@ fn parse_args() -> Result<(), std::io::Error> {
             Command::new("tag")
                 .about("Checkout by an object ID")
                 .arg(Arg::new("name").help("The tag name").required(true))
-                .arg(Arg::new("oid").help("The object ID")),
+                .arg(Arg::new("oid").default_value("@").help("The object ID")),
         )
         .get_matches();
 
@@ -68,11 +68,11 @@ fn parse_args() -> Result<(), std::io::Error> {
             read_tree(sub_matches.get_one::<String>("tree").unwrap())
         }
         Some(("commit", sub_matches)) => commit(sub_matches.get_one::<String>("message").unwrap()),
-        Some(("log", sub_matches)) => log(sub_matches.get_one::<String>("oid").cloned()),
+        Some(("log", sub_matches)) => log(sub_matches.get_one::<String>("oid").unwrap()),
         Some(("checkout", sub_matches)) => checkout(sub_matches.get_one::<String>("oid").unwrap()),
         Some(("tag", sub_matches)) => tag(
             sub_matches.get_one::<String>("name").unwrap(),
-            sub_matches.get_one::<String>("oid").map(|s| s.as_str()),
+            sub_matches.get_one::<String>("oid").unwrap(),
         ),
         _ => unreachable!("No subcommand"),
     }
@@ -120,10 +120,10 @@ fn commit(message: &str) -> Result<(), std::io::Error> {
     Ok(())
 }
 
-fn log(input_oid: Option<String>) -> Result<(), std::io::Error> {
-    let mut oid = input_oid.map_or(data::get_ref("HEAD"), |ioid| Some(base::get_oid(&ioid)));
+fn log(oid: &str) -> Result<(), std::io::Error> {
+    let mut log_oid = Some(base::get_oid(oid));
 
-    while let Some(o) = oid {
+    while let Some(o) = log_oid {
         let actual_oid = &o.replace("\"", "");
         let commit: base::Commit = base::get_commit(actual_oid);
 
@@ -132,9 +132,9 @@ fn log(input_oid: Option<String>) -> Result<(), std::io::Error> {
         println!();
 
         if let Some(p) = commit.parent {
-            oid = Some(p.replace("parent ", ""));
+            log_oid = Some(p.replace("parent ", ""));
         } else {
-            oid = None
+            log_oid = None
         }
     }
 
@@ -146,11 +146,8 @@ fn checkout(oid: &str) -> Result<(), std::io::Error> {
     Ok(())
 }
 
-fn tag(name: &str, oid: Option<&str>) -> Result<(), std::io::Error> {
-    base::create_tag(
-        name,
-        &oid.map_or(data::get_ref("HEAD").unwrap(), |ioid| base::get_oid(ioid)),
-    )?;
+fn tag(name: &str, oid: &str) -> Result<(), std::io::Error> {
+    base::create_tag(name, &base::get_oid(&oid))?;
     Ok(())
 }
 

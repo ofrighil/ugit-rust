@@ -74,6 +74,16 @@ pub fn get_commit(oid: &str) -> Commit {
 }
 
 pub fn get_oid(name: &str) -> String {
+    let name = {
+        if name == "@" {
+            "HEAD"
+        } else {
+            name
+        }
+    };
+
+    println!("{}", name);
+
     // Name is a ref
     let ref_names = [
         format!("{}", name),
@@ -209,5 +219,6 @@ pub fn checkout(oid: &str) -> std::io::Result<()> {
 pub fn create_tag(name: &str, oid: &str) -> std::io::Result<()> {
     let ref_name = &format!("refs/tags/{}", name);
     data::update_ref(ref_name, oid)?;
+
     Ok(())
 }
