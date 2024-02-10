@@ -51,6 +51,16 @@ fn parse_args() -> Result<(), std::io::Error> {
                 .arg(Arg::new("name").help("The tag name").required(true))
                 .arg(Arg::new("oid").default_value("@").help("The object ID")),
         )
+        .subcommand(
+            Command::new("branch")
+                .about("Create a new branch")
+                .arg(Arg::new("name").help("The branch name").required(true))
+                .arg(
+                    Arg::new("start_point")
+                        .default_value("@")
+                        .help("The object ID"),
+                ),
+        )
         .subcommand(Command::new("k").about("Visualizer tool to draw all refs and commits"))
         .get_matches();
 
@@ -74,6 +84,10 @@ fn parse_args() -> Result<(), std::io::Error> {
         Some(("tag", sub_matches)) => tag(
             sub_matches.get_one::<String>("name").unwrap(),
             sub_matches.get_one::<String>("oid").unwrap(),
+        ),
+        Some(("branch", submatches)) => branch(
+            &submatches.get_one::<String>("name").unwrap(),
+            &submatches.get_one::<String>("start_point").unwrap(),
         ),
         Some(("k", _)) => k(),
         _ => unreachable!("No subcommand"),
@@ -139,6 +153,13 @@ fn checkout(oid: &str) -> Result<(), std::io::Error> {
 
 fn tag(name: &str, oid: &str) -> Result<(), std::io::Error> {
     base::create_tag(name, &base::get_oid(&oid))?;
+    Ok(())
+}
+
+fn branch(name: &str, start_point: &str) -> Result<(), std::io::Error> {
+    let oid = base::get_oid(start_point);
+    base::create_branch(name, &oid)?;
+    println!("Branch {} created at {}", name, &oid[0..10]);
     Ok(())
 }
 

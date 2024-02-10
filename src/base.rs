@@ -21,6 +21,12 @@ impl Entry {
     }
 }
 
+pub fn create_branch(name: &str, oid: &str) -> std::io::Result<()> {
+    data::update_ref(&format!("refs/heads/{}", name), oid)?;
+
+    Ok(())
+}
+
 #[derive(Debug)]
 pub struct Commit {
     pub tree: String,
