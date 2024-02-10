@@ -154,19 +154,31 @@ fn tag(name: &str, oid: &str) -> Result<(), std::io::Error> {
 }
 
 fn k() -> Result<(), std::io::Error> {
+    let mut dot = "digraph commits {\n".to_string();
     let mut oids = vec![];
-    for r in data::refs().iter() {
-        println!("{}", r);
-        oids.push(base::get_oid(r));
+    for r in data::refs().into_iter() {
+        let o = base::get_oid(&r);
+        dot.push_str(&format!("\"{}\" [shape=note]\n", &r));
+        dot.push_str(&format!("\"{}\" -> \"{}\"\n", &r, &o));
+        oids.push(o);
     }
 
     for oid in base::commits_and_parents(oids) {
         let commit = base::get_commit(&oid);
-        println!("{}", oid);
+        dot.push_str(&format!(
+            "\"{}\" [shape=box style=filled label=\"{}\"\n]",
+            oid,
+            &oid[0..10]
+        ));
         if let Some(parent) = commit.parent {
-            println!("{}", parent);
+            dot.push_str(&format!("\"{}\" -> \"{}\"\n", oid, parent));
         }
     }
+
+    dot.push('}');
+    println!("{}", dot);
+
+    // Yeah, I'm not actually going to subprocess dot
 
     Ok(())
 }
