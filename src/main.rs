@@ -154,8 +154,18 @@ fn tag(name: &str, oid: &str) -> Result<(), std::io::Error> {
 }
 
 fn k() -> Result<(), std::io::Error> {
+    let mut oids = vec![];
     for r in data::refs().iter() {
         println!("{}", r);
+        oids.push(base::get_oid(r));
+    }
+
+    for oid in base::commits_and_parents(oids) {
+        let commit = base::get_commit(&oid);
+        println!("{}", oid);
+        if let Some(parent) = commit.parent {
+            println!("{}", parent);
+        }
     }
 
     Ok(())

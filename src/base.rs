@@ -1,4 +1,4 @@
-use std::{fs, io::Write, path::Path, path::PathBuf};
+use std::{collections::HashSet, fs, io::Write, path::Path, path::PathBuf};
 
 use crate::data;
 
@@ -73,6 +73,22 @@ pub fn get_commit(oid: &str) -> Commit {
     }
 }
 
+pub fn commits_and_parents(mut oids: Vec<String>) -> HashSet<String> {
+    let mut visited = HashSet::new();
+    while !oids.is_empty() {
+        let oid = oids.pop().unwrap();
+        if !visited.contains(&oid) {
+            visited.insert(oid.clone());
+            let commit = get_commit(&oid);
+            if let Some(parent) = commit.parent {
+                oids.push(parent.split(" ").last().unwrap().to_string());
+            }
+        }
+    }
+
+    visited
+}
+
 pub fn get_oid(name: &str) -> String {
     let name = {
         if name == "@" {
@@ -81,8 +97,6 @@ pub fn get_oid(name: &str) -> String {
             name
         }
     };
-
-    println!("{}", name);
 
     // Name is a ref
     let ref_names = [
