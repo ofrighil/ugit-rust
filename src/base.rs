@@ -73,12 +73,14 @@ pub fn get_commit(oid: &str) -> Commit {
     }
 }
 
-pub fn commits_and_parents(mut oids: Vec<String>) -> HashSet<String> {
+pub fn commits_and_parents(mut oids: Vec<String>) -> Vec<String> {
+    let mut ordered_oids = vec![];
     let mut visited = HashSet::new();
     while !oids.is_empty() {
         let oid = oids.pop().unwrap();
         if !visited.contains(&oid) {
             visited.insert(oid.clone());
+            ordered_oids.push(oid.clone());
             let commit = get_commit(&oid);
             if let Some(parent) = commit.parent {
                 oids.push(parent.split(" ").last().unwrap().to_string());
@@ -86,7 +88,7 @@ pub fn commits_and_parents(mut oids: Vec<String>) -> HashSet<String> {
         }
     }
 
-    visited
+    ordered_oids
 }
 
 pub fn get_oid(name: &str) -> String {

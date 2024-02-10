@@ -123,21 +123,10 @@ fn commit(message: &str) -> Result<(), std::io::Error> {
 }
 
 fn log(oid: &str) -> Result<(), std::io::Error> {
-    let mut log_oid = Some(base::get_oid(oid));
-
-    while let Some(o) = log_oid {
-        let actual_oid = &o.replace("\"", "");
-        let commit: base::Commit = base::get_commit(actual_oid);
-
-        println!("commit {}", actual_oid);
-        println!("{}", commit.message);
-        println!();
-
-        if let Some(p) = commit.parent {
-            log_oid = Some(p.replace("parent ", ""));
-        } else {
-            log_oid = None
-        }
+    for oid in base::commits_and_parents(vec![base::get_oid(oid)]).into_iter() {
+        let commit = base::get_commit(&oid);
+        println!("commit {}", oid);
+        println!("{}\n", commit.message);
     }
 
     Ok(())
