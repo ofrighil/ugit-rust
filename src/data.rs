@@ -49,7 +49,7 @@ pub struct RefValue {
 
 pub fn update_ref(ref_name: &str, value: RefValue) -> std::io::Result<()> {
     assert!(!value.symbolic);
-    let ref_path = format!("{}/{}", GIT_DIR, ref_name);
+    let ref_path = get_ref_internal(&format!("{}/{}", GIT_DIR, ref_name)).0;
     fs::create_dir_all(Path::new(&ref_path).parent().unwrap())?;
     let mut file = fs::File::create(ref_path)?;
     file.write_all(value.value.as_bytes())?;
@@ -57,6 +57,10 @@ pub fn update_ref(ref_name: &str, value: RefValue) -> std::io::Result<()> {
 }
 
 pub fn get_ref(ref_name: &str) -> Option<RefValue> {
+    get_ref_internal(ref_name).1
+}
+
+fn get_ref_internal(ref_name: &str) -> (String, Option<RefValue>) {
     let ref_path = format!("{}/{}", GIT_DIR, ref_name);
     if Path::new(&ref_path).try_exists().unwrap() {
         let value = io::BufReader::new(fs::File::open(&ref_path).unwrap())
@@ -67,16 +71,20 @@ pub fn get_ref(ref_name: &str) -> Option<RefValue> {
             .unwrap()
             .replace("\"", "");
 
-        if value.starts_with("ref:") {
-            get_ref(value.split(':').nth(1).unwrap())
+        let symbolic = value.starts_with("ref:");
+        if symbolic {
+            get_ref_internal(value.split(':').nth(1).unwrap())
         } else {
-            Some(RefValue {
-                symbolic: false,
-                value,
-            })
+            (
+                ref_name.to_string(),
+                Some(RefValue {
+                    symbolic: false,
+                    value,
+                }),
+            )
         }
     } else {
-        None
+        (ref_name.to_string(), None)
     }
 }
 
