@@ -21,12 +21,6 @@ impl Entry {
     }
 }
 
-pub fn create_branch(name: &str, oid: &str) -> std::io::Result<()> {
-    data::update_ref(&format!("refs/heads/{}", name), oid)?;
-
-    Ok(())
-}
-
 #[derive(Debug)]
 pub struct Commit {
     pub tree: String,
@@ -37,8 +31,8 @@ pub struct Commit {
 pub fn commit(message: &str) -> std::io::Result<String> {
     let mut commit_message = Vec::new();
     commit_message.push(format!("tree {}", write_tree(Path::new("."))));
-    if let Some(parent) = data::get_ref("HEAD") {
-        commit_message.push(format!("parent {}", parent));
+    if let Some(parent_value) = data::get_ref("HEAD") {
+        commit_message.push(format!("parent {}", parent_value.value));
     }
     commit_message.push("".to_string());
     commit_message.push(message.to_string());
@@ -48,7 +42,13 @@ pub fn commit(message: &str) -> std::io::Result<String> {
         data::ObjectType::Commit,
     )?;
 
-    data::update_ref("HEAD", &oid)?;
+    data::update_ref(
+        "HEAD",
+        data::RefValue {
+            symbolic: false,
+            value: oid.clone(),
+        },
+    )?;
 
     Ok(oid)
 }
@@ -114,8 +114,8 @@ pub fn get_oid(name: &str) -> String {
         format!("refs/heads/{}", name),
     ];
     for ref_name in ref_names {
-        if let Some(oid) = data::get_ref(&ref_name) {
-            return oid.replace("\"", "");
+        if let Some(value) = data::get_ref(&ref_name) {
+            return value.value.to_string();
         }
     }
 
@@ -230,17 +230,41 @@ pub fn read_tree(tree_oid: &str) -> std::io::Result<()> {
     Ok(())
 }
 
-pub fn checkout(oid: &str) -> std::io::Result<()> {
-    let commit = get_commit(oid);
+pub fn checkout(oid: String) -> std::io::Result<()> {
+    let commit = get_commit(&oid);
     read_tree(&commit.tree)?;
-    data::update_ref("HEAD", oid)?;
+    data::update_ref(
+        "HEAD",
+        data::RefValue {
+            symbolic: false,
+            value: oid,
+        },
+    )?;
 
     Ok(())
 }
 
-pub fn create_tag(name: &str, oid: &str) -> std::io::Result<()> {
+pub fn create_tag(name: &str, oid: String) -> std::io::Result<()> {
     let ref_name = &format!("refs/tags/{}", name);
-    data::update_ref(ref_name, oid)?;
+    data::update_ref(
+        ref_name,
+        data::RefValue {
+            symbolic: false,
+            value: oid,
+        },
+    )?;
+
+    Ok(())
+}
+
+pub fn create_branch(name: &str, oid: String) -> std::io::Result<()> {
+    data::update_ref(
+        &format!("refs/heads/{}", name),
+        data::RefValue {
+            symbolic: false,
+            value: oid,
+        },
+    )?;
 
     Ok(())
 }

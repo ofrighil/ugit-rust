@@ -42,15 +42,21 @@ pub fn init() -> std::io::Result<()> {
     fs::create_dir_all(format!("{}/objects", GIT_DIR))
 }
 
-pub fn update_ref(ref_name: &str, oid: &str) -> std::io::Result<()> {
+pub struct RefValue {
+    pub symbolic: bool,
+    pub value: String,
+}
+
+pub fn update_ref(ref_name: &str, value: RefValue) -> std::io::Result<()> {
+    assert!(!value.symbolic);
     let ref_path = format!("{}/{}", GIT_DIR, ref_name);
     fs::create_dir_all(Path::new(&ref_path).parent().unwrap())?;
     let mut file = fs::File::create(ref_path)?;
-    file.write_all(oid.as_bytes())?;
+    file.write_all(value.value.as_bytes())?;
     Ok(())
 }
 
-pub fn get_ref(ref_name: &str) -> Option<String> {
+pub fn get_ref(ref_name: &str) -> Option<RefValue> {
     let ref_path = format!("{}/{}", GIT_DIR, ref_name);
     if Path::new(&ref_path).try_exists().unwrap() {
         let value = io::BufReader::new(fs::File::open(&ref_path).unwrap())
@@ -58,16 +64,16 @@ pub fn get_ref(ref_name: &str) -> Option<String> {
             .take(1)
             .next()
             .unwrap()
-            .ok();
+            .unwrap()
+            .replace("\"", "");
 
-        if let Some(r) = value.clone() {
-            if r.starts_with("ref:") {
-                get_ref(r.split(':').nth(1).unwrap())
-            } else {
-                value
-            }
+        if value.starts_with("ref:") {
+            get_ref(value.split(':').nth(1).unwrap())
         } else {
-            value
+            Some(RefValue {
+                symbolic: false,
+                value,
+            })
         }
     } else {
         None

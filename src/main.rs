@@ -86,8 +86,8 @@ fn parse_args() -> Result<(), std::io::Error> {
             sub_matches.get_one::<String>("oid").unwrap(),
         ),
         Some(("branch", submatches)) => branch(
-            &submatches.get_one::<String>("name").unwrap(),
-            &submatches.get_one::<String>("start_point").unwrap(),
+            submatches.get_one::<String>("name").unwrap(),
+            submatches.get_one::<String>("start_point").unwrap(),
         ),
         Some(("k", _)) => k(),
         _ => unreachable!("No subcommand"),
@@ -147,18 +147,18 @@ fn log(oid: &str) -> Result<(), std::io::Error> {
 }
 
 fn checkout(oid: &str) -> Result<(), std::io::Error> {
-    base::checkout(&base::get_oid(oid))?;
+    base::checkout(base::get_oid(oid))?;
     Ok(())
 }
 
 fn tag(name: &str, oid: &str) -> Result<(), std::io::Error> {
-    base::create_tag(name, &base::get_oid(&oid))?;
+    base::create_tag(name, base::get_oid(oid))?;
     Ok(())
 }
 
 fn branch(name: &str, start_point: &str) -> Result<(), std::io::Error> {
     let oid = base::get_oid(start_point);
-    base::create_branch(name, &oid)?;
+    base::create_branch(name, oid.clone())?;
     println!("Branch {} created at {}", name, &oid[0..10]);
     Ok(())
 }
