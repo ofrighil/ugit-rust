@@ -53,12 +53,22 @@ pub fn update_ref(ref_name: &str, oid: &str) -> std::io::Result<()> {
 pub fn get_ref(ref_name: &str) -> Option<String> {
     let ref_path = format!("{}/{}", GIT_DIR, ref_name);
     if Path::new(&ref_path).try_exists().unwrap() {
-        io::BufReader::new(fs::File::open(&ref_path).unwrap())
+        let value = io::BufReader::new(fs::File::open(&ref_path).unwrap())
             .lines()
             .take(1)
             .next()
             .unwrap()
-            .ok()
+            .ok();
+
+        if let Some(r) = value.clone() {
+            if r.starts_with("ref:") {
+                get_ref(r.split(':').nth(1).unwrap())
+            } else {
+                value
+            }
+        } else {
+            value
+        }
     } else {
         None
     }
@@ -80,7 +90,7 @@ pub fn hash_object(data: &[u8], otype: ObjectType) -> std::io::Result<String> {
     let mut file = fs::File::create(format!("{}/objects/{}", GIT_DIR, string_representation))?;
     file.write_all(&saved_data)?;
 
-    Ok(format!("{:x?}", string_representation))
+    Ok(format!("{:x?}", string_representation.replace("\"", "")))
 }
 
 pub fn get_object(object: &str, expected: ObjectType) -> Vec<u8> {

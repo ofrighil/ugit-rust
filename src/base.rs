@@ -115,7 +115,7 @@ pub fn get_oid(name: &str) -> String {
     ];
     for ref_name in ref_names {
         if let Some(oid) = data::get_ref(&ref_name) {
-            return oid;
+            return oid.replace("\"", "");
         }
     }
 
