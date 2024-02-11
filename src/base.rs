@@ -114,7 +114,7 @@ pub fn get_oid(name: &str) -> String {
         format!("refs/heads/{}", name),
     ];
     for ref_name in ref_names {
-        if let Some(value) = data::get_ref(&ref_name) {
+        if let Some(value) = data::get_ref(&ref_name, false) {
             return value.value.to_string();
         }
     }

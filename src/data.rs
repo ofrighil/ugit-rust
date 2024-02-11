@@ -56,32 +56,29 @@ pub fn update_ref(ref_name: &str, value: RefValue) -> std::io::Result<()> {
     Ok(())
 }
 
-pub fn get_ref(ref_name: &str) -> Option<RefValue> {
-    get_ref_internal(ref_name).1
+pub fn get_ref(ref_name: &str, deref: bool) -> Option<RefValue> {
+    get_ref_internal(ref_name, deref).1
 }
 
-fn get_ref_internal(ref_name: &str) -> (String, Option<RefValue>) {
+fn get_ref_internal(ref_name: &str, deref: bool) -> (String, Option<RefValue>) {
     let ref_path = format!("{}/{}", GIT_DIR, ref_name);
     if Path::new(&ref_path).try_exists().unwrap() {
         let value = io::BufReader::new(fs::File::open(&ref_path).unwrap())
             .lines()
             .take(1)
             .next()
-            .unwrap()
-            .unwrap()
-            .replace("\"", "");
+            .unwrap();
 
-        let symbolic = value.starts_with("ref:");
-        if symbolic {
-            get_ref_internal(value.split(':').nth(1).unwrap())
+        if let Ok(v) = value {
+            let value = v.replace("\"", "");
+            let symbolic = value.starts_with("ref:");
+            if symbolic && deref {
+                get_ref_internal(value.split(':').nth(1).unwrap(), deref)
+            } else {
+                (ref_name.to_string(), Some(RefValue {symbolic, value}))
+            }
         } else {
-            (
-                ref_name.to_string(),
-                Some(RefValue {
-                    symbolic: false,
-                    value,
-                }),
-            )
+            (ref_name.to_string(), None)
         }
     } else {
         (ref_name.to_string(), None)
@@ -142,7 +139,7 @@ fn get_refs(directory: &Path) -> Vec<String> {
     entries
 }
 
-pub fn refs() -> Vec<String> {
+pub fn refs(deref: bool) -> Vec<String> {
     let mut ref_list = vec!["HEAD".to_string()];
     ref_list.extend(get_refs(&Path::new(&format!("{}/refs", GIT_DIR))));
 
